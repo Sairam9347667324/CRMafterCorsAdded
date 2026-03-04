@@ -10,6 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/invoices")
+@CrossOrigin("crm.vblptechsolutions.com")
 public class InvoiceController {
 
     @Autowired

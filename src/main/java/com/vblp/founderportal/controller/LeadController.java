@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.vblp.founderportal.DTO.LeadAuditDTO;
 import com.vblp.founderportal.DTO.PendingLeadDTO;
@@ -18,14 +19,21 @@ import com.vblp.founderportal.entity.Lead;
 import com.vblp.founderportal.entity.Lead.EnquirySource;
 import com.vblp.founderportal.entity.Lead.LeadStatus;
 import com.vblp.founderportal.entity.Lead.ServiceType;
+import com.vblp.founderportal.service.LeadService;
 
 @RestController
 @RequestMapping("/api/leads")
-@CrossOrigin("*")
+@CrossOrigin("crm.vblptechsolutions.com")
 public class LeadController {
 
     @Autowired
     private LeadRepository leadRepository;
+    
+    private final LeadService service;
+
+    public LeadController(LeadService service) {
+        this.service = service;
+    }
 
     // 1️⃣ Create Lead
     @PostMapping
@@ -66,11 +74,13 @@ public class LeadController {
             Lead existingLead = optionalLead.get();
 
             existingLead.setFullName(updatedLead.getFullName());
+            existingLead.setBusinessName(updatedLead.getBusinessName());
+            existingLead.setLocation(updatedLead.getLocation());
             existingLead.setPhoneNumber(updatedLead.getPhoneNumber());
             existingLead.setEnquirySource(updatedLead.getEnquirySource());
             existingLead.setServiceType(updatedLead.getServiceType());
             existingLead.setStatus(updatedLead.getStatus());
-            existingLead.setProjectDate(updatedLead.getProjectDate());
+            existingLead.setprojectDate(updatedLead.getprojectDate());
 
             leadRepository.save(existingLead);
 
@@ -192,22 +202,42 @@ public class LeadController {
     // 1️⃣2️⃣ Audit by Date
     @GetMapping("/audit/date")
     public ResponseEntity<LeadAuditDTO> getDailyAuditByDate(
-            @RequestParam("date") 
+            @RequestParam("date")
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 
-        LeadAuditDTO audit = leadRepository.findLeadAuditByDate(date)
-                .orElseGet(() -> new LeadAuditDTO(
-                        date,  // projectDate
-                        0L,    // totalLeads
-                        0L,    // newLeads
-                        0L,    // contactedLeads
-                        0L,    // acceptedLeads
-                        0L,    // proposalSentLeads
-                        0L,    // closedWonLeads
-                        0L     // closedLostLeads
-                ));
+        Optional<LeadAuditDTO> optionalAudit =
+                leadRepository.findLeadAuditByDate(
+                        date,
+                        Lead.LeadStatus.Newlead,
+                        Lead.LeadStatus.Contacted,
+                        Lead.LeadStatus.Accepted,
+                        Lead.LeadStatus.ProposalSent,
+                        Lead.LeadStatus.ClosedWon,
+                        Lead.LeadStatus.ClosedLost
+                );
+
+        LeadAuditDTO audit = optionalAudit.orElse(
+                new LeadAuditDTO(
+                        date,
+                        0L,
+                        0L,
+                        0L,
+                        0L,
+                        0L,
+                        0L,
+                        0L
+                )
+        );
 
         return ResponseEntity.ok(audit);
+    }
+    
+    // Excel Upload
+    @PostMapping("/upload")
+    public ResponseEntity<String> uploadExcel(
+            @RequestParam("file") MultipartFile file) {
+
+        return ResponseEntity.ok(service.uploadExcel(file));
     }
     
     

@@ -36,20 +36,30 @@ public interface LeadRepository extends JpaRepository<Lead, Long> {
     List<PendingLeadDTO> findNewLeads(@Param("status") Lead.LeadStatus status);
 
     // Audit
-    @Query("SELECT new com.vblp.founderportal.DTO.LeadAuditDTO(" +
-            "l.projectDate, " +
-            "COUNT(l), " +
-            "SUM(CASE WHEN l.status = com.vblp.founderportal.entity.Lead.LeadStatus.Newlead THEN 1 ELSE 0 END), " +
-            "SUM(CASE WHEN l.status = com.vblp.founderportal.entity.Lead.LeadStatus.Contacted THEN 1 ELSE 0 END), " +
-            "SUM(CASE WHEN l.status = com.vblp.founderportal.entity.Lead.LeadStatus.ACCEPTED THEN 1 ELSE 0 END), " +
-            "SUM(CASE WHEN l.status = com.vblp.founderportal.entity.Lead.LeadStatus.ProposalSent THEN 1 ELSE 0 END), " +
-            "SUM(CASE WHEN l.status = com.vblp.founderportal.entity.Lead.LeadStatus.ClosedWon THEN 1 ELSE 0 END), " +
-            "SUM(CASE WHEN l.status = com.vblp.founderportal.entity.Lead.LeadStatus.ClosedLost THEN 1 ELSE 0 END)" +
-            ") " +
-            "FROM Lead l " +
-            "WHERE l.projectDate = :date " +
-            "GROUP BY l.projectDate")
-    Optional<LeadAuditDTO> findLeadAuditByDate(@Param("date") LocalDate date);
+    @Query("""
+    		SELECT new com.vblp.founderportal.DTO.LeadAuditDTO(
+    		    l.projectDate,
+    		    COUNT(l),
+    		    SUM(CASE WHEN l.status = :newLead THEN 1 ELSE 0 END),
+    		    SUM(CASE WHEN l.status = :contacted THEN 1 ELSE 0 END),
+    		    SUM(CASE WHEN l.status = :accepted THEN 1 ELSE 0 END),
+    		    SUM(CASE WHEN l.status = :proposalSent THEN 1 ELSE 0 END),
+    		    SUM(CASE WHEN l.status = :closedWon THEN 1 ELSE 0 END),
+    		    SUM(CASE WHEN l.status = :closedLost THEN 1 ELSE 0 END)
+    		)
+    		FROM Lead l
+    		WHERE l.projectDate = :date
+    		GROUP BY l.projectDate
+    		""")
+    		Optional<LeadAuditDTO> findLeadAuditByDate(
+    		        @Param("date") LocalDate date,
+    		        @Param("newLead") Lead.LeadStatus newLead,
+    		        @Param("contacted") Lead.LeadStatus contacted,
+    		        @Param("accepted") Lead.LeadStatus accepted,
+    		        @Param("proposalSent") Lead.LeadStatus proposalSent,
+    		        @Param("closedWon") Lead.LeadStatus closedWon,
+    		        @Param("closedLost") Lead.LeadStatus closedLost
+    		);
 
     
 
