@@ -23,7 +23,6 @@ import com.vblp.founderportal.service.LeadService;
 
 @RestController
 @RequestMapping("/api/leads")
-@CrossOrigin("crm.vblptechsolutions.com")
 public class LeadController {
 
     @Autowired
